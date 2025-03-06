@@ -57,6 +57,71 @@ class GameScene extends Phaser.Scene {
         console.log("GameScene: setup complete");
     }
     
+    flap() {
+        if (this.isGameOver) {
+            return;
+        }
+        
+        // Make bird jump
+        this.bird.body.velocity.y = gameSettings.playerJump;
+    }
+    
+    addRowOfPipes() {
+        console.log("Adding pipes");
+        
+        // Calculate safe gap positions
+        const minGapY = 100; // Minimum gap position from top
+        const maxGapY = this.cameras.main.height - 112 - 100 - gameSettings.pipeGap; // Maximum gap position, accounting for ground and gap size
+        
+        // Determine gap position - more controlled range
+        const gapY = Phaser.Math.Between(minGapY, maxGapY);
+        
+        // Top pipe - set its bottom at the gap top
+        const topPipe = this.pipeGroup.create(
+            this.cameras.main.width + 50,
+            gapY - 320, // Position so bottom of pipe is at gap top
+            'pipe'
+        );
+        topPipe.setOrigin(0.5, 0);  // Origin at middle-top
+        topPipe.body.allowGravity = false;
+        topPipe.body.immovable = true;
+        topPipe.body.velocity.x = -200;
+        
+        // Bottom pipe - set its top at the gap bottom
+        const bottomPipe = this.pipeGroup.create(
+            this.cameras.main.width + 50,
+            gapY + gameSettings.pipeGap, // Position so top of pipe is at gap bottom
+            'pipe'
+        );
+        bottomPipe.setOrigin(0.5, 0);  // Origin at middle-top
+        bottomPipe.body.allowGravity = false;
+        bottomPipe.body.immovable = true;
+        bottomPipe.body.velocity.x = -200;
+        
+        // Create a special property to track this pair of pipes for scoring
+        topPipe.scored = false;
+        
+        // Rather than using a separate score zone, we'll check in the update method
+    }
+    
+    // Add this method to your GameScene class
+    checkScore() {
+        this.pipeGroup.getChildren().forEach(pipe => {
+            // Only check pipes that haven't been scored and have passed the bird
+            if (pipe.texture.key === 'pipe' && !pipe.scored && pipe.x < this.bird.x - 5) {
+                // Make sure we only count each pair of pipes once by checking the y position
+                // (top pipes have negative or small y values)
+                if (pipe.y < 100) {
+                    pipe.scored = true;
+                    this.score += 1;
+                    this.scoreText.setText(this.score.toString());
+                    console.log("Score:", this.score);
+                }
+            }
+        });
+    }
+    
+    // And in your update method, add this call:
     update(time, delta) {
         if (this.isGameOver) {
             return;
@@ -92,76 +157,9 @@ class GameScene extends Phaser.Scene {
                 this.pipeGroup.remove(pipe, true, true);
             }
         });
-    }
-    
-    flap() {
-        if (this.isGameOver) {
-            return;
-        }
         
-        // Make bird jump
-        this.bird.body.velocity.y = gameSettings.playerJump;
-    }
-    
-    addRowOfPipes() {
-        console.log("Adding pipes");
-        
-        // Determine gap position
-        const holePosition = Phaser.Math.Between(1, 5);
-        const pipeGap = gameSettings.pipeGap;
-        
-        // Top pipe
-        const topPipe = this.pipeGroup.create(
-            this.cameras.main.width + 50,
-            (holePosition * 60) - 320 + 20,  // Adjust to have the bottom at the gap
-            'pipe'
-        );
-        topPipe.setOrigin(0.5, 0);  // Origin at middle-top
-        topPipe.body.allowGravity = false;
-        topPipe.body.immovable = true;
-        topPipe.body.velocity.x = -200;
-        
-        // Bottom pipe
-        const bottomPipe = this.pipeGroup.create(
-            this.cameras.main.width + 50,
-            (holePosition * 60) + pipeGap,  // Start at the gap
-            'pipe'
-        );
-        bottomPipe.setOrigin(0.5, 0);  // Origin at middle-top
-        bottomPipe.body.allowGravity = false;
-        bottomPipe.body.immovable = true;
-        bottomPipe.body.velocity.x = -200;
-        
-        // Create an invisible score zone in the gap
-        const scoreZone = this.physics.add.sprite(
-            this.cameras.main.width + 50,
-            (holePosition * 60) + (pipeGap / 2),
-            null
-        );
-        scoreZone.setSize(5, pipeGap);
-        scoreZone.body.allowGravity = false;
-        scoreZone.body.velocity.x = -200;
-        
-        // Track if this has been scored
-        scoreZone.scored = false;
-        this.pipeGroup.add(scoreZone);
-        
-        // Check for passing the score zone
-        const timer = this.time.addEvent({
-            delay: 100,
-            callback: () => {
-                if (!scoreZone.scored && scoreZone.x < this.bird.x) {
-                    scoreZone.scored = true;
-                    this.score += 1;
-                    this.scoreText.setText(this.score.toString());
-                }
-            },
-            callbackScope: this,
-            loop: true
-        });
-        
-        // Store the timer reference so we can clean it up later
-        this.scoreTimers.push(timer);
+        // Check for score (new line added here)
+        this.checkScore();
     }
     
     gameOver() {

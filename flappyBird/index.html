@@ -1,21 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappy Bird Clone</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Flappy Bird - Phaser 3</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
 </head>
-<body>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="1000" height="500"></canvas>
-        <div id="start-screen">
-            <div>Flappy Bird Clone</div>
-            <div>Press Space to Jump</div>
-            <button id="start-button">Start Game</button>
-        </div>
-    </div>
-
+<body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#333;">
+    <!-- Game Scenes -->
+    <script src="scenes/PreloadScene.js"></script>
+    <script src="scenes/MenuScene.js"></script>
+    <script src="scenes/GameScene.js"></script>
+    <script src="scenes/GameOverScene.js"></script>
+    
+    <!-- Main Game Configuration -->
     <script src="game.js"></script>
 </body>
 </html>
